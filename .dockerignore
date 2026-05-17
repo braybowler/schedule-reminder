@@ -1,0 +1,15 @@
+node_modules
+.env
+.env.local
+artifacts
+*.log
+.git
+.gitignore
+.dockerignore
+Dockerfile
+docker-compose.yml
+README.md
+.idea
+.vscode
+playwright-report
+test-results

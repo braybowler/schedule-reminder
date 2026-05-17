@@ -1,0 +1,30 @@
+{
+  "name": "schedule-reminder",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "scrape": "tsx src/scrape.ts",
+    "notify": "tsx src/notify.ts",
+    "run-once": "tsx src/run.ts",
+    "schedule": "tsx src/scheduler.ts",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "dotenv": "^16.4.5",
+    "node-cron": "^4.2.1",
+    "nodemailer": "^8.0.7",
+    "pino": "^9.5.0",
+    "playwright": "^1.48.0",
+    "twilio": "^6.0.2",
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "@types/node": "^22.7.0",
+    "@types/node-cron": "^3.0.11",
+    "@types/nodemailer": "^8.0.0",
+    "pino-pretty": "^11.3.0",
+    "tsx": "^4.19.0",
+    "typescript": "^5.6.0"
+  }
+}

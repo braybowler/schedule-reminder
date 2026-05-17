@@ -1,0 +1,15 @@
+services:
+  schedule-reminder:
+    image: ghcr.io/braybowler/schedule-reminder:latest
+    container_name: schedule-reminder
+    restart: unless-stopped
+    init: true
+    env_file:
+      - .env
+    environment:
+      HEADLESS: "true"
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
