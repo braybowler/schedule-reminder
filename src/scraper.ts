@@ -26,6 +26,10 @@ const SELECTORS = {
     prevArrow: 'app-control-center-toolbar a:has(i.icon-left-arrow)',
     nextArrow: 'app-control-center-toolbar a:has(i.icon-right-arrow)',
     appointment: '.dx-scheduler-appointment',
+    // Wait target: the inner grid host. The outer <dx-scheduler> element
+    // does not render reliably in headless Chromium, but .dx-scheduler-work-space
+    // is consistently present once the grid has mounted.
+    grid: '.dx-scheduler-work-space',
   },
 };
 
@@ -64,16 +68,6 @@ function formatDateLabel(iso: string): string {
   return `${monthDay} ${weekday}`;
 }
 
-function formatAriaDate(iso: string): string {
-  const [y, m, d] = iso.split('-').map(Number);
-  return new Intl.DateTimeFormat('en-US', {
-    timeZone: 'UTC',
-    month: 'long',
-    day: 'numeric',
-    year: 'numeric',
-  }).format(new Date(Date.UTC(y, m - 1, d)));
-}
-
 const ARTIFACTS_DIR = 'artifacts';
 
 async function saveArtifacts(page: Page, label: string): Promise<string[]> {
@@ -85,6 +79,11 @@ async function saveArtifacts(page: Page, label: string): Promise<string[]> {
   await writeFile(htmlPath, await page.content());
   return [pngPath, htmlPath];
 }
+
+// Per-selector / per-step timeout. The droplet under chromium load is meaningfully
+// slower than a dev laptop, and this job runs once a night, so we trade latency
+// for reliability.
+const STEP_TIMEOUT_MS = 60_000;
 
 async function login(page: Page): Promise<void> {
   logger.info({ url: config.CLINICMASTER_LOGIN_URL }, 'opening login page');
@@ -98,28 +97,16 @@ async function login(page: Page): Promise<void> {
   await page.locator(SELECTORS.login.submit).first().click();
 
   logger.info('waiting for dashboard');
-  await page.waitForURL(/\/main\/dashboard/, { timeout: 20_000 });
+  await page.waitForURL(/\/main\/dashboard/, { timeout: STEP_TIMEOUT_MS });
   logger.info('logged in');
 }
 
 async function navigateToCalendar(page: Page): Promise<void> {
   logger.info('clicking Calendar nav button from dashboard');
   await page.locator(SELECTORS.calendar.navButton).first().click();
-  await page.waitForURL(/control-center/, { timeout: 15_000 });
-  await page.locator('dx-scheduler').waitFor({ state: 'visible', timeout: 15_000 });
+  await page.waitForURL(/control-center/, { timeout: STEP_TIMEOUT_MS });
+  await page.locator(SELECTORS.calendar.grid).first().waitFor({ state: 'visible', timeout: STEP_TIMEOUT_MS });
   logger.info({ url: page.url() }, 'calendar loaded');
-}
-
-async function waitForGridDate(page: Page, date: string): Promise<void> {
-  const needle = formatAriaDate(date);
-  await page.waitForFunction(
-    ({ selector, needle }) => {
-      const el = document.querySelector(selector);
-      return !!el?.getAttribute('aria-label')?.includes(needle);
-    },
-    { selector: 'dx-scheduler', needle },
-    { timeout: 15_000 }
-  );
 }
 
 async function setCalendarDate(page: Page, date: string): Promise<void> {
@@ -135,7 +122,8 @@ async function setCalendarDate(page: Page, date: string): Promise<void> {
     const current = (await dateDisplay.textContent())?.trim();
     if (current === target) {
       logger.info({ date: target, clicks: i }, 'date set');
-      await waitForGridDate(page, date);
+      // Give the grid a beat to re-render appointment cells after the date change.
+      await page.waitForTimeout(3_000);
       return;
     }
     const currentIso = parseLabel(current ?? '');
@@ -147,7 +135,7 @@ async function setCalendarDate(page: Page, date: string): Promise<void> {
         return el && el.textContent?.trim() !== expected;
       },
       { sel: SELECTORS.calendar.dateDisplay, expected: current ?? '' },
-      { timeout: 5_000 }
+      { timeout: STEP_TIMEOUT_MS }
     );
   }
   throw new Error(`failed to advance calendar to ${target}`);
@@ -212,10 +200,20 @@ export async function scrapeFirstAppointmentWithRetry(
   return last;
 }
 
+// Hard ceiling on a single scrape attempt. If exceeded, the browser is force-closed,
+// which causes any in-flight Playwright operation to reject and surface as a scrape error.
+const OVERALL_TIMEOUT_MS = 5 * 60_000;
+
 export async function scrapeFirstAppointment(date: string): Promise<ScrapeResult> {
   const browser: Browser = await chromium.launch({ headless: config.HEADLESS });
   const context = await browser.newContext({ viewport: { width: 1440, height: 900 } });
   const page = await context.newPage();
+  page.setDefaultTimeout(STEP_TIMEOUT_MS);
+
+  const overallTimer = setTimeout(() => {
+    logger.warn({ timeoutMs: OVERALL_TIMEOUT_MS }, 'scrape exceeded overall timeout, force-closing browser');
+    void browser.close().catch(() => undefined);
+  }, OVERALL_TIMEOUT_MS);
 
   try {
     await login(page);
@@ -237,6 +235,7 @@ export async function scrapeFirstAppointment(date: string): Promise<ScrapeResult
     logger.error({ reason, artifacts }, 'scrape failed');
     return { kind: 'error', reason, artifacts };
   } finally {
-    await browser.close();
+    clearTimeout(overallTimer);
+    await browser.close().catch(() => undefined);
   }
 }

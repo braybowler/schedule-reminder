@@ -15,7 +15,7 @@ const ConfigSchema = z.object({
   CLINICMASTER_PASSWORD: z.string().min(1),
   HEADLESS: z
     .enum(['true', 'false'])
-    .default('false')
+    .default('true')
     .transform((v) => v === 'true'),
   LOG_LEVEL: z
     .enum(['trace', 'debug', 'info', 'warn', 'error'])
