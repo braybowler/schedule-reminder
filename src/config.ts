@@ -34,7 +34,7 @@ const ConfigSchema = z.object({
   NOTIFY_EMAIL: optionalString,
   ALERT_EMAIL: optionalString,
 
-  SCHEDULE_CRON: z.string().default('55 21 * * 0-4'),
+  SCHEDULE_CRON: z.string().default('55 20 * * 0-4'),
 });
 
 const parsed = ConfigSchema.safeParse(process.env);
