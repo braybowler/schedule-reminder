@@ -4,10 +4,10 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "scrape": "tsx src/scrape.ts",
-    "notify": "tsx src/notify.ts",
+    "scrape": "tsx src/scraping/scrape.ts",
+    "notify": "tsx src/notifications/notify.ts",
     "run-once": "tsx src/run.ts",
-    "schedule": "tsx src/scheduler.ts",
+    "schedule": "tsx src/scheduling/scheduler.ts",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {

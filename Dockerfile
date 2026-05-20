@@ -14,4 +14,4 @@ RUN npm ci
 COPY --chown=pwuser:pwuser tsconfig.json ./
 COPY --chown=pwuser:pwuser src/ ./src/
 
-CMD ["./node_modules/.bin/tsx", "src/scheduler.ts"]
+CMD ["./node_modules/.bin/tsx", "src/scheduling/scheduler.ts"]

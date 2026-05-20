@@ -1,5 +1,5 @@
-import { config } from './config';
-import { logger } from './logger';
+import { config } from '../config/config';
+import { logger } from '../logging/logger';
 import { sendEmail, sendSms } from './notifier';
 
 async function tryChannel<T>(

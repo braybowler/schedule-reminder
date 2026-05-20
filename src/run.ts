@@ -1,7 +1,7 @@
-import { config } from './config';
-import { logger } from './logger';
-import { type Appointment, scrapeFirstAppointmentWithRetry } from './scraper';
-import { sendEmail, sendSms } from './notifier';
+import { config } from './config/config';
+import { logger } from './logging/logger';
+import { type Appointment, scrapeFirstAppointmentWithRetry } from './scraping/scraper';
+import { sendEmail, sendSms } from './notifications/notifier';
 
 function tomorrowInTz(tz: string): string {
   const todayParts = new Intl.DateTimeFormat('en-CA', {

@@ -1,7 +1,7 @@
 import cron from 'node-cron';
-import { config } from './config';
-import { logger } from './logger';
-import { runOnce } from './run';
+import { config } from '../config/config';
+import { logger } from '../logging/logger';
+import { runOnce } from '../run';
 
 function start(): void {
   const { SCHEDULE_CRON, TIMEZONE } = config;

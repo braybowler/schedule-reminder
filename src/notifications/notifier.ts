@@ -1,7 +1,7 @@
 import twilio from 'twilio';
 import nodemailer from 'nodemailer';
-import { config } from './config';
-import { logger } from './logger';
+import { config } from '../config/config';
+import { logger } from '../logging/logger';
 
 export async function sendSms(body: string): Promise<void> {
   const { TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN, TWILIO_FROM_NUMBER, NOTIFY_PHONE_NUMBER } = config;

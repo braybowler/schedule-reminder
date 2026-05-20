@@ -1,8 +1,8 @@
 import { chromium, type Browser, type Page } from 'playwright';
 import { mkdir, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
-import { config } from './config';
-import { logger } from './logger';
+import { config } from '../config/config';
+import { logger } from '../logging/logger';
 
 export type Appointment = {
   clientName: string;
